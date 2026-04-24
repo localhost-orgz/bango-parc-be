@@ -1,8 +1,11 @@
 import express from "express";
 import adminRoutes from "./src/routes/adminRoutes.js";
+import customerRoutes from "./src/routes/customerRoutes.js";
+import cors from "cors";
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 app.get("/", (req, res) => {
   res.send("Server is running");
@@ -13,6 +16,7 @@ app.get("/health", (req, res) => {
 
 // Routes
 app.use("/api/admin", adminRoutes);
+app.use("/api/customer", customerRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
