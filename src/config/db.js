@@ -1,3 +1,4 @@
+
 import "dotenv/config";
 import { PrismaClient } from "../generated/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -11,10 +12,3 @@ export const prisma = new PrismaClient({
   adapter,
   log: process.env.NODE_ENV == "development" ? ["error", "warn"] : ["error"],
 });
-
-const cleanup = async () => {
-  await prisma.$disconnect();
-};
-
-process.on("beforeExit", cleanup);
-process.on("exit", cleanup);
