@@ -18,6 +18,4 @@ app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
-app.listen(3000, () => {
-  console.log("Server run on localhost:3000");
-});
+export default app;
