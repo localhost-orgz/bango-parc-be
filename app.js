@@ -1,4 +1,5 @@
 import express from "express";
+import { prisma } from "./src/config/db.js";
 
 const app = express();
 
@@ -8,8 +9,15 @@ app.get("/", (req, res) => {
   res.send("Server is running");
 });
 
+app.get("/admin", async (req, res) => {
+  const admins = await prisma.customer.findMany();
+  res.json(admins);
+});
+
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
-export default app;
+app.listen(3000, () => {
+  console.log("Server run on localhost:3000");
+});
