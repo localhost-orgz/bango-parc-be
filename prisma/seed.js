@@ -14,23 +14,13 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
-  await prisma.admin.upsert({
-    where: { email: "bangoparc@gmail.com" },
-    update: {},
-    create: {
+  await prisma.user.create({
+    data: {
+      fullName: "Admin Bango Parc",
       email: "bangoparc@gmail.com",
-      name: "Bango Parc",
-      password: await bcrypt.hash("bangoparc_", 10),
-    },
-  });
-
-  await prisma.customer.upsert({
-    where: { email: "alex@gmail.com" },
-    update: {},
-    create: {
-      email: "alex@gmail.com",
-      name: "Alex",
-      phone: "08123456789",
+      password: await bcrypt.hash("BangoParc0", 10),
+      whatsappNumber: "081234567890",
+      role: "ADMIN",
     },
   });
 }
