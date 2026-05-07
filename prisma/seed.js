@@ -21,6 +21,7 @@ async function main() {
       password: await bcrypt.hash("BangoParc0", 10),
       whatsappNumber: "081234567890",
       role: "ADMIN",
+      isVerified: true,
     },
   });
 }

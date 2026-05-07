@@ -17,9 +17,11 @@ model User {
   fullName String
   email    String @unique
 
-  password       String?
-  whatsappNumber String
-  role           UserRole @default(CUSTOMER)
+  password          String?
+  whatsappNumber    String
+  role              UserRole @default(CUSTOMER)
+  verificationToken String?  @unique
+  isVerified        Boolean? @default(false)
 
   googleId     String? @unique
   googleAvatar String?
