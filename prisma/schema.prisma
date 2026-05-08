@@ -29,3 +29,28 @@ model User {
 
   @@map("users")
 }
+
+model AreaType {
+  id                 Int     @id @default(autoincrement())
+  uuid               String  @unique @default(uuid())
+  areaName           String
+  maxCapPax          Int
+  electricPowerWatt  Int
+  isWeddingAvailable Boolean
+
+  areaPricePlans AreaPricePlan[]
+
+  @@map("area_types")
+}
+
+model AreaPricePlan {
+  id           Int    @id @default(autoincrement())
+  areaTypeId   Int
+  planName     String
+  planDuration Int
+  planPrice    Float
+
+  areaType AreaType @relation(fields: [areaTypeId], references: [id])
+
+  @@map("area_price_plans")
+}
