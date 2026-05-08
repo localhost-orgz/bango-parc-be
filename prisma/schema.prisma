@@ -72,3 +72,13 @@ model Gallery {
 
   @@map("galleries")
 }
+
+model AddOn {
+  id    Int    @id @default(autoincrement())
+  uuid  String @unique @default(uuid())
+  name  String
+  price Float
+  unit  String
+
+  @@map("add_ons")
+}
