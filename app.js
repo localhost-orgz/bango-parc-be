@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import authRoutes from "./src/routes/authRoutes.js";
 import areaRoutes from "./src/routes/areaRoutes.js";
+import galleryRoutes from "./src/routes/galleryRoutes.js";
 
 const app = express();
 app.use(express.json());
@@ -17,6 +18,7 @@ app.get("/health", (req, res) => {
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/area", areaRoutes);
+app.use("/api/gallery", galleryRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

@@ -12,7 +12,7 @@ export const getAllArea = async (search) => {
     : {};
   return await prisma.areaType.findMany({
     where,
-    include: { areaPricePlans: true },
+    include: { areaPricePlans: true, galleries: true },
   });
 };
 
@@ -35,7 +35,7 @@ export const createArea = async (areaTypeData, areaPricePlanData = []) => {
 export const getAreaById = async (uuid) =>
   await prisma.areaType.findUnique({
     where: { uuid },
-    include: { areaPricePlans: true },
+    include: { areaPricePlans: true, galleries: true },
   });
 
 export const updateArea = async (uuid, data) =>

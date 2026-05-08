@@ -39,6 +39,7 @@ model AreaType {
   isWeddingAvailable Boolean
 
   areaPricePlans AreaPricePlan[]
+  galleries      Gallery[]
 
   @@map("area_types")
 }
@@ -53,4 +54,21 @@ model AreaPricePlan {
   areaType AreaType @relation(fields: [areaTypeId], references: [id])
 
   @@map("area_price_plans")
+}
+
+enum GalleryMediaType {
+  PHOTO
+  TOUR360
+}
+
+model Gallery {
+  id         Int              @id @default(autoincrement())
+  areaTypeId Int
+  filePath   String
+  mediaType  GalleryMediaType @default(PHOTO)
+  isPrimary  Boolean          @default(false)
+
+  areaType AreaType @relation(fields: [areaTypeId], references: [id])
+
+  @@map("galleries")
 }
