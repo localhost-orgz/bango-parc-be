@@ -15,11 +15,11 @@ Bango Parc is a venue reservation system that allows users to easily and efficie
 |     |                         | Verify                     | ✓       |
 | 2   | Master Data Module      | Reservation Type           | -       |
 |     |                         | Area                       | ✓       |
-|     |                         | Gallery                    | ✓       |
+|     |                         | Gallery                    | -       |
 |     |                         | Area Price                 | -       |
-|     |                         | Addon                      | ✓       |
-|     |                         | Facility                   | -       |
-|     |                         | Area Facility              | -       |
+|     |                         | Addon                      | -       |
+|     |                         | Facility                   | ✓       |
+|     |                         | Area Facility              | ✓       |
 | 3   | Reservation System      | Make Reservation           | -       |
 |     |                         | Get Reservation            | -       |
 |     |                         | Update Reservation         | -       |

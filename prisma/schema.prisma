@@ -76,20 +76,20 @@ model User {
   @@map("users")
 }
 
-// model ReservationType {
-//   id Int @id @default(autoincrement())
+model ReservationType {
+  id Int @id @default(autoincrement())
 
-//   name                 String
-//   durationIntervalHour Int
+  name                 String
+  durationIntervalHour Int
 
-//   reservations Reservation[]
-//   areaPrices   AreaPrice[]
+  // reservations Reservation[]
+  // areaPrices   AreaPrice[]
 
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-//   @@map("reservation_types")
-// }
+  @@map("reservation_types")
+}
 
 model Area {
   id Int @id @default(autoincrement())

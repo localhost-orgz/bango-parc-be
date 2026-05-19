@@ -6,6 +6,7 @@ import galleryRoutes from "./src/routes/galleryRoutes.js";
 import addonRoutes from "./src/routes/addonRoutes.js";
 import reservationRoutes from "./src/routes/reservationRoutes.js";
 import facilityRoutes from "./src/routes/facilityRoutes.js";
+import reservationTypeRoutes from "./src/routes/reservationTypeRoutes.js";
 
 const app = express();
 app.use(express.json());
@@ -25,6 +26,7 @@ app.use("/api/gallery", galleryRoutes);
 app.use("/api/addon", addonRoutes);
 app.use("/api/reservation", reservationRoutes);
 app.use("/api/facility", facilityRoutes);
+app.use("/api/reservation-type", reservationTypeRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
