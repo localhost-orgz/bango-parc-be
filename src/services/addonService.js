@@ -9,29 +9,29 @@ export const getAllAddons = async (search) => {
         },
       }
     : {};
-  return await prisma.addOn.findMany({ where });
+  return await prisma.addon.findMany({ where });
 };
 
-export const createAddon = async (name, price, unit) => {
-  return await prisma.addOn.create({
+export const createAddon = async (name, price, description) => {
+  return await prisma.addon.create({
     data: {
       name,
       price,
-      unit,
+      description,
     },
   });
 };
 
-export const getAddonById = async (uuid) =>
-  await prisma.addOn.findUnique({
-    where: { uuid },
+export const getAddonById = async (id) =>
+  await prisma.addon.findUnique({
+    where: { id },
   });
 
-export const updateAddon = async (uuid, data) =>
-  await prisma.addOn.update({
-    where: { uuid },
+export const updateAddon = async (id, data) =>
+  await prisma.addon.update({
+    where: { id },
     data,
   });
 
-export const deleteAddon = async (uuid) =>
-  await prisma.addOn.delete({ where: { uuid } });
+export const deleteAddon = async (id) =>
+  await prisma.addon.delete({ where: { id } });

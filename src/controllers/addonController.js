@@ -12,8 +12,8 @@ export const getAllAddons = async (req, res) => {
 
 export const createAddon = async (req, res) => {
   try {
-    const { name, price, unit } = req.body;
-    const addon = await addonService.createAddon(name, price, unit);
+    const { name, price, description } = req.body;
+    const addon = await addonService.createAddon(name, price, description);
     res.status(201).json({ success: true, data: addon });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -22,8 +22,8 @@ export const createAddon = async (req, res) => {
 
 export const getAddonById = async (req, res) => {
   try {
-    const { uuid } = req.params;
-    const addon = await addonService.getAddonById(uuid);
+    const id = parseInt(req.params.id, 10);
+    const addon = await addonService.getAddonById(id);
     if (!addon) {
       return res
         .status(404)
@@ -37,9 +37,10 @@ export const getAddonById = async (req, res) => {
 
 export const updateAddon = async (req, res) => {
   try {
-    const { uuid } = req.params;
+    const id = parseInt(req.params.id, 10);
+
     const data = req.body;
-    const addon = await addonService.updateAddon(uuid, data);
+    const addon = await addonService.updateAddon(id, data);
     res.status(200).json({ success: true, data: addon });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -48,8 +49,9 @@ export const updateAddon = async (req, res) => {
 
 export const deleteAddon = async (req, res) => {
   try {
-    const { uuid } = req.params;
-    await addonService.deleteAddon(uuid);
+    const id = parseInt(req.params.id, 10);
+
+    await addonService.deleteAddon(id);
     res
       .status(200)
       .json({ success: true, message: "Addon deleted successfully" });

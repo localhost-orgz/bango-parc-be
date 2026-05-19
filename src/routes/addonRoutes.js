@@ -13,8 +13,8 @@ const router = express.Router();
 
 router.post("/", validate(addonSchema), createAddon);
 router.get("/", getAllAddons);
-router.get("/:uuid", getAddonById);
-router.put("/:uuid", validate(addonSchema), updateAddon);
-router.delete("/:uuid", deleteAddon);
+router.get("/:id", getAddonById);
+router.put("/:id", validate(addonSchema), updateAddon);
+router.delete("/:id", deleteAddon);
 
 export default router;
