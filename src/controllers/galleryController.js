@@ -2,7 +2,7 @@ import { addGallery, removeFileService } from "../services/galleryService.js";
 
 export const addImages = async (req, res) => {
   try {
-    const { areaTypeId, mediaType, isPrimary } = req.body;
+    const { areaId, title, description, mediaType, isPrimary } = req.body;
     const file = req.file;
 
     if (!file) {
@@ -12,7 +12,9 @@ export const addImages = async (req, res) => {
     const filePath = `uploads/gallery/${file.filename}`;
 
     const gallery = await addGallery(
-      Number(areaTypeId),
+      Number(areaId),
+      title,
+      description ?? null,
       filePath,
       mediaType,
       isPrimary === "true" || isPrimary === true,

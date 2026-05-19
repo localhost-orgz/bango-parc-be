@@ -43,10 +43,10 @@ enum UserRole {
 //   OVERDUE
 // }
 
-// enum MediaType {
-//   IMAGE
-//   TOUR360
-// }
+enum MediaType {
+  IMAGE
+  TOUR360
+}
 
 model User {
   id   Int    @id @default(autoincrement())
@@ -100,6 +100,7 @@ model Area {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   areaFacilities AreaFacility[]
+  galleries      Gallery[]
 
   @@map("areas")
 }
@@ -138,25 +139,25 @@ model AreaFacility {
   @@map("area_facilities")
 }
 
-// model Gallery {
-//   id Int @id @default(autoincrement())
+model Gallery {
+  id Int @id @default(autoincrement())
 
-//   areaId Int
-//   area   Area @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  areaId Int
+  area   Area @relation(fields: [areaId], references: [id], onDelete: Cascade)
 
-//   title       String
-//   description String?
+  title       String
+  description String?
 
-//   filePath  String
-//   mediaType MediaType
+  filePath  String
+  mediaType MediaType
 
-//   isPrimary Boolean @default(false)
+  isPrimary Boolean @default(false)
 
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-//   @@map("galleries")
-// }
+  @@map("galleries")
+}
 
 // model AreaPrice {
 //   id Int @id @default(autoincrement())

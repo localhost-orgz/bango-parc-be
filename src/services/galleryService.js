@@ -3,7 +3,9 @@ import fs from "fs/promises";
 import path from "path";
 
 export const addGallery = async (
-  areaTypeId,
+  areaId,
+  title,
+  description,
   filePath,
   mediaType,
   isPrimary,
@@ -11,7 +13,9 @@ export const addGallery = async (
   try {
     const gallery = await prisma.gallery.create({
       data: {
-        areaTypeId,
+        areaId,
+        title,
+        description,
         filePath,
         mediaType,
         isPrimary,

@@ -2,9 +2,11 @@ import { z } from "zod";
 
 export const gallerySchema = z.object({
   body: z.object({
-    areaTypeId: z.coerce.number(),
+    areaId: z.coerce.number(),
+    title: z.string().min(1),
+    description: z.string().optional().nullable(),
     file: z.any(),
-    mediaType: z.enum(["PHOTO", "TOUR360"]),
+    mediaType: z.enum(["IMAGE", "TOUR360"]),
     isPrimary: z.coerce.boolean().default(false),
   }),
 });
