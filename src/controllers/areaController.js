@@ -2,10 +2,11 @@ import * as areaService from "../services/areaService.js";
 
 export const createArea = async (req, res) => {
   try {
-    const { name, description, facilityIds } = req.body;
+    const { name, description, facilityIds, areaPrices } = req.body;
     const area = await areaService.createArea(
       { name, description },
       facilityIds ?? [],
+      areaPrices ?? [],
     );
     res.status(201).json({ success: true, data: area });
   } catch (error) {

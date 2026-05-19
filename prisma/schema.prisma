@@ -12,14 +12,14 @@ enum UserRole {
   CUSTOMER
 }
 
-// enum ReservationStatus {
-//   WAITING_DP
-//   CONFIRMED
-//   ONGOING
-//   COMPLETED
-//   CANCELLED
-//   EXPIRED
-// }
+enum ReservationStatus {
+  WAITING_DP
+  CONFIRMED
+  ONGOING
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
 
 // enum PaymentScheduleStatus {
 //   PENDING
@@ -34,13 +34,6 @@ enum UserRole {
 //   APPROVED
 //   REJECTED
 //   CANCELLED
-// }
-
-// enum PaymentStatus {
-//   UNPAID
-//   PARTIAL
-//   PAID
-//   OVERDUE
 // }
 
 enum MediaType {
@@ -67,7 +60,7 @@ model User {
   googleAvatar String?
   googleToken  String?
 
-  // customerReservations Reservation[]  @relation("CustomerReservations")
+  customerReservations Reservation[] @relation("CustomerReservations")
   // adminApprovedProofs  PaymentProof[] @relation("AdminApprovedProofs")
 
   createdAt DateTime @default(now())
@@ -82,8 +75,8 @@ model ReservationType {
   name                 String
   durationIntervalHour Int
 
-  // reservations Reservation[]
-  // areaPrices   AreaPrice[]
+  reservations Reservation[]
+  areaPrices   AreaPrice[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -100,14 +93,14 @@ model Area {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   areaFacilities AreaFacility[]
-  galleries      Gallery[]
+
+  galleries        Gallery[]
+  areaPrices       AreaPrice[]
+  // areaReservations AreaReservation[]
+  areaReservations AreaReservation[]
 
   @@map("areas")
 }
-
-// galleries        Gallery[]
-// areaPrices       AreaPrice[]
-// areaReservations AreaReservation[]
 
 model Facility {
   id        Int     @id @default(autoincrement())
@@ -159,23 +152,23 @@ model Gallery {
   @@map("galleries")
 }
 
-// model AreaPrice {
-//   id Int @id @default(autoincrement())
+model AreaPrice {
+  id Int @id @default(autoincrement())
 
-//   areaId Int
-//   area   Area @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  areaId Int
+  area   Area @relation(fields: [areaId], references: [id], onDelete: Cascade)
 
-//   reservationTypeId Int
-//   reservationType   ReservationType @relation(fields: [reservationTypeId], references: [id], onDelete: Cascade)
+  reservationTypeId Int
+  reservationType   ReservationType @relation(fields: [reservationTypeId], references: [id], onDelete: Cascade)
 
-//   price Decimal @db.Decimal(15, 2)
+  price Decimal @db.Decimal(15, 2)
 
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-//   @@unique([areaId, reservationTypeId])
-//   @@map("area_prices")
-// }
+  @@unique([areaId, reservationTypeId])
+  @@map("area_prices")
+}
 
 model Addon {
   id Int @id @default(autoincrement())
@@ -186,7 +179,7 @@ model Addon {
 
   isActive Boolean @default(true)
 
-  // addonReservations AddonReservation[]
+  addonReservations AddonReservation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -194,83 +187,81 @@ model Addon {
   @@map("addons")
 }
 
-// model Reservation {
-//   id   Int    @id @default(autoincrement())
-//   uuid String @unique @default(uuid())
+model Reservation {
+  id   Int    @id @default(autoincrement())
+  uuid String @unique @default(uuid())
 
-//   bookingCode String @unique
+  bookingCode String @unique
 
-//   customerId Int
-//   customer   User @relation("CustomerReservations", fields: [customerId], references: [id])
+  customerId Int
+  customer   User @relation("CustomerReservations", fields: [customerId], references: [id])
 
-//   reservationTypeId Int
-//   reservationType   ReservationType @relation(fields: [reservationTypeId], references: [id])
+  reservationTypeId Int
+  reservationType   ReservationType @relation(fields: [reservationTypeId], references: [id])
 
-//   eventDate DateTime
+  startDateTime DateTime
+  endDateTime   DateTime
 
-//   startTime DateTime
-//   endTime   DateTime
+  totalAreaPrice  Decimal @default(0) @db.Decimal(15, 2)
+  totalAddonPrice Decimal @default(0) @db.Decimal(15, 2)
 
-//   totalAreaPrice  Decimal @default(0) @db.Decimal(15, 2)
-//   totalAddonPrice Decimal @default(0) @db.Decimal(15, 2)
+  totalPrice       Decimal @default(0) @db.Decimal(15, 2)
+  paidAmount       Decimal @default(0) @db.Decimal(15, 2)
+  remainingBalance Decimal @default(0) @db.Decimal(15, 2)
 
-//   totalPrice       Decimal @default(0) @db.Decimal(15, 2)
-//   paidAmount       Decimal @default(0) @db.Decimal(15, 2)
-//   remainingBalance Decimal @default(0) @db.Decimal(15, 2)
+  status ReservationStatus @default(WAITING_DP)
 
-//   paymentStatus PaymentStatus @default(UNPAID)
+  cancellationReason String?
+  cancelledAt        DateTime?
 
-//   cancellationReason String?
-//   cancelledAt        DateTime?
+  areaReservations  AreaReservation[]
+  addonReservations AddonReservation[]
 
-//   areaReservations  AreaReservation[]
-//   addonReservations AddonReservation[]
+  // paymentSchedules PaymentSchedule[]
 
-//   paymentSchedules PaymentSchedule[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
+  @@map("reservations")
+}
 
-//   @@map("reservations")
-// }
+model AreaReservation {
+  id Int @id @default(autoincrement())
 
-// model AreaReservation {
-//   id Int @id @default(autoincrement())
+  reservationId Int
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
 
-//   reservationId Int
-//   reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  areaId Int
+  area   Area @relation(fields: [areaId], references: [id], onDelete: Cascade)
 
-//   areaId Int
-//   area   Area @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  priceSnapshot Decimal @db.Decimal(15, 2)
+  subtotal      Decimal @db.Decimal(15, 2)
 
-//   priceSnapshot Decimal @db.Decimal(15, 2)
-//   subtotal      Decimal @db.Decimal(15, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
+  @@map("area_reservations")
+}
 
-//   @@map("area_reservations")
-// }
+model AddonReservation {
+  id Int @id @default(autoincrement())
 
-// model AddonReservation {
-//   id Int @id @default(autoincrement())
+  reservationId Int
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
 
-//   reservationId Int
-//   reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  addonId Int
+  addon   Addon @relation(fields: [addonId], references: [id], onDelete: Cascade)
 
-//   addonId Int
-//   addon   Addon @relation(fields: [addonId], references: [id], onDelete: Cascade)
+  qty Int @default(1)
 
-//   qty Int @default(1)
+  priceSnapshot Decimal @db.Decimal(15, 2)
+  subtotal      Decimal @db.Decimal(15, 2)
 
-//   priceSnapshot Decimal @db.Decimal(15, 2)
-//   subtotal      Decimal @db.Decimal(15, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-
-//   @@map("addon_reservations")
-// }
+  @@map("addon_reservations")
+}
 
 // model PaymentSchedule {
 //   id Int @id @default(autoincrement())

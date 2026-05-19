@@ -6,6 +6,11 @@ const areaInclude = {
       facility: true,
     },
   },
+  areaPrices: {
+    include: {
+      reservationType: true,
+    },
+  },
 };
 
 export const getAllArea = async (search) => {
@@ -23,7 +28,12 @@ export const getAllArea = async (search) => {
   });
 };
 
-export const createArea = async ({ name, description }, facilityIds = []) => {
+export const createArea = async (
+  { name, description },
+  facilityIds = [],
+  areaPrices = [],
+) => {
+  // handle facility
   if (facilityIds.length > 0) {
     const foundFacilities = await prisma.facility.findMany({
       where: { id: { in: facilityIds } },
@@ -40,6 +50,27 @@ export const createArea = async ({ name, description }, facilityIds = []) => {
     }
   }
 
+  // handle areaPrices
+  if (areaPrices.length > 0) {
+    const reservationTypeIds = areaPrices.map((ap) => ap.reservationTypeId);
+
+    const foundReservationTypes = await prisma.reservationType.findMany({
+      where: { id: { in: reservationTypeIds } },
+      select: { id: true },
+    });
+
+    const foundIds = new Set(foundReservationTypes.map((rt) => rt.id));
+    const missingIds = reservationTypeIds.filter(
+      (reservationTypeId) => !foundIds.has(reservationTypeId),
+    );
+
+    if (missingIds.length > 0) {
+      throw new Error(
+        `ReservationType IDs not found: ${missingIds.join(", ")}`,
+      );
+    }
+  }
+
   return await prisma.area.create({
     data: {
       name,
@@ -47,6 +78,12 @@ export const createArea = async ({ name, description }, facilityIds = []) => {
       ...(facilityIds.length && {
         areaFacilities: {
           create: facilityIds.map((facilityId) => ({ facilityId })),
+        },
+        areaPrices: {
+          create: areaPrices.map((areaPrice) => ({
+            reservationTypeId: areaPrice.reservationTypeId,
+            price: areaPrice.price,
+          })),
         },
       }),
     },
