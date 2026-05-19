@@ -1,87 +1,104 @@
 import { prisma } from "../config/db.js";
 
-// === AreaType ===
+const areaInclude = {
+  areaFacilities: {
+    include: {
+      facility: true,
+    },
+  },
+};
+
 export const getAllArea = async (search) => {
   const where = search
     ? {
-        areaName: {
+        name: {
           contains: search,
           mode: "insensitive",
         },
       }
     : {};
-  return await prisma.areaType.findMany({
+  return await prisma.area.findMany({
     where,
-    include: { areaPricePlans: true, galleries: true },
+    include: areaInclude,
   });
 };
 
-export const createArea = async (areaTypeData, areaPricePlanData = []) => {
-  return await prisma.areaType.create({
-    data: {
-      ...areaTypeData,
-      areaPricePlans: areaPricePlanData.length
-        ? {
-            create: areaPricePlanData,
-          }
-        : undefined,
-    },
-    include: {
-      areaPricePlans: true,
-    },
-  });
-};
-
-export const getAreaById = async (uuid) =>
-  await prisma.areaType.findUnique({
-    where: { uuid },
-    include: { areaPricePlans: true, galleries: true },
-  });
-
-export const updateArea = async (uuid, data) =>
-  await prisma.areaType.update({
-    where: { uuid },
-    data,
-    include: { areaPricePlans: true },
-  });
-
-export const deleteArea = async (uuid) =>
-  await prisma.areaType.delete({ where: { uuid } });
-
-// === AreaPricePlan ===
-export const createPricePlan = async (areaTypeId, areaPricePlans = []) => {
-  const areaType = await getAreaById(areaTypeId);
-  const dataToCreate = areaPricePlans.map((plan) => ({
-    areaTypeId: areaType.id,
-    planName: plan.planName,
-    planDuration: plan.planDuration,
-    planPrice: plan.planPrice,
-  }));
-
-  return await prisma.areaPricePlan.createMany({
-    data: dataToCreate,
-  });
-};
-
-export const getPricePlan = async (areaTypeId) => {
-  return await prisma.areaPricePlan.findMany({
-    where: { areaTypeId },
-  });
-};
-
-export const updatePricePlan = async (areaPricePlans = []) => {
-  const updatePromises = areaPricePlans.map(async (plan) => {
-    const { id, ...updateData } = plan;
-    return prisma.areaPricePlan.update({
-      where: { id },
-      data: updateData,
+export const createArea = async ({ name, description }, facilityIds = []) => {
+  if (facilityIds.length > 0) {
+    const foundFacilities = await prisma.facility.findMany({
+      where: { id: { in: facilityIds } },
+      select: { id: true },
     });
+
+    const foundIds = new Set(foundFacilities.map((f) => f.id));
+    const missingIds = facilityIds.filter(
+      (facilityId) => !foundIds.has(facilityId),
+    );
+
+    if (missingIds.length > 0) {
+      throw new Error(`Facility IDs not found: ${missingIds.join(", ")}`);
+    }
+  }
+
+  return await prisma.area.create({
+    data: {
+      name,
+      description,
+      ...(facilityIds.length && {
+        areaFacilities: {
+          create: facilityIds.map((facilityId) => ({ facilityId })),
+        },
+      }),
+    },
+    include: areaInclude,
   });
-  return Promise.all(updatePromises);
 };
 
-export const deletePricePlan = async (id) => {
-  return await prisma.areaPricePlan.delete({
+export const getAreaById = async (id) =>
+  await prisma.area.findUnique({
     where: { id },
+    include: areaInclude,
+  });
+
+export const updateArea = async (id, { name, description }, facilityIds) => {
+  const existingArea = await prisma.area.findUnique({ where: { id } });
+  if (!existingArea) {
+    throw new Error("Area not found");
+  }
+
+  const data = {};
+  if (name !== undefined) data.name = name;
+  if (description !== undefined) data.description = description;
+
+  if (facilityIds !== undefined) {
+    if (facilityIds.length > 0) {
+      const foundFacilities = await prisma.facility.findMany({
+        where: { id: { in: facilityIds } },
+        select: { id: true },
+      });
+
+      const foundIds = new Set(foundFacilities.map((f) => f.id));
+      const missingIds = facilityIds.filter(
+        (facilityId) => !foundIds.has(facilityId),
+      );
+
+      if (missingIds.length > 0) {
+        throw new Error(`Facility IDs not found: ${missingIds.join(", ")}`);
+      }
+    }
+
+    data.areaFacilities = {
+      deleteMany: {},
+      create: facilityIds.map((facilityId) => ({ facilityId })),
+    };
+  }
+
+  return await prisma.area.update({
+    where: { id },
+    data,
+    include: areaInclude,
   });
 };
+
+export const deleteArea = async (id) =>
+  await prisma.area.delete({ where: { id } });

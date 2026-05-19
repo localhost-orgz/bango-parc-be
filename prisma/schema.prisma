@@ -12,14 +12,54 @@ enum UserRole {
   CUSTOMER
 }
 
+// enum ReservationStatus {
+//   WAITING_DP
+//   CONFIRMED
+//   ONGOING
+//   COMPLETED
+//   CANCELLED
+//   EXPIRED
+// }
+
+// enum PaymentScheduleStatus {
+//   PENDING
+//   PARTIAL
+//   PAID
+//   OVERDUE
+//   CANCELLED
+// }
+
+// enum PaymentProofApprovalStatus {
+//   PENDING
+//   APPROVED
+//   REJECTED
+//   CANCELLED
+// }
+
+// enum PaymentStatus {
+//   UNPAID
+//   PARTIAL
+//   PAID
+//   OVERDUE
+// }
+
+// enum MediaType {
+//   IMAGE
+//   TOUR360
+// }
+
 model User {
-  id       Int    @id @default(autoincrement())
+  id   Int    @id @default(autoincrement())
+  uuid String @unique @default(uuid())
+
   fullName String
   email    String @unique
 
-  password          String?
-  whatsappNumber    String
-  role              UserRole @default(CUSTOMER)
+  password       String?
+  whatsappNumber String
+
+  role UserRole @default(CUSTOMER)
+
   verificationToken String?  @unique
   isVerified        Boolean? @default(false)
 
@@ -27,58 +67,257 @@ model User {
   googleAvatar String?
   googleToken  String?
 
+  // customerReservations Reservation[]  @relation("CustomerReservations")
+  // adminApprovedProofs  PaymentProof[] @relation("AdminApprovedProofs")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("users")
 }
 
-model AreaType {
-  id                 Int     @id @default(autoincrement())
-  uuid               String  @unique @default(uuid())
-  areaName           String
-  maxCapPax          Int
-  electricPowerWatt  Int
-  isWeddingAvailable Boolean
+// model ReservationType {
+//   id Int @id @default(autoincrement())
 
-  areaPricePlans AreaPricePlan[]
-  galleries      Gallery[]
+//   name                 String
+//   durationIntervalHour Int
 
-  @@map("area_types")
+//   reservations Reservation[]
+//   areaPrices   AreaPrice[]
+
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@map("reservation_types")
+// }
+
+model Area {
+  id Int @id @default(autoincrement())
+
+  name        String
+  description String?
+
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  areaFacilities AreaFacility[]
+
+  @@map("areas")
 }
 
-model AreaPricePlan {
-  id           Int    @id @default(autoincrement())
-  areaTypeId   Int
-  planName     String
-  planDuration Int
-  planPrice    Float
+// galleries        Gallery[]
+// areaPrices       AreaPrice[]
+// areaReservations AreaReservation[]
 
-  areaType AreaType @relation(fields: [areaTypeId], references: [id])
+model Facility {
+  id        Int     @id @default(autoincrement())
+  name      String
+  icon      String
+  value     String
+  isDisplay Boolean @default(true)
 
-  @@map("area_price_plans")
+  areaFacilities AreaFacility[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("facilities")
 }
 
-enum GalleryMediaType {
-  PHOTO
-  TOUR360
+model AreaFacility {
+  id         Int @id @default(autoincrement())
+  areaId     Int
+  facilityId Int
+
+  area     Area     @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  facility Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([areaId, facilityId])
+  @@map("area_facilities")
 }
 
-model Gallery {
-  id         Int              @id @default(autoincrement())
-  areaTypeId Int
-  filePath   String
-  mediaType  GalleryMediaType @default(PHOTO)
-  isPrimary  Boolean          @default(false)
+// model Gallery {
+//   id Int @id @default(autoincrement())
 
-  areaType AreaType @relation(fields: [areaTypeId], references: [id])
+//   areaId Int
+//   area   Area @relation(fields: [areaId], references: [id], onDelete: Cascade)
 
-  @@map("galleries")
-}
+//   title       String
+//   description String?
 
-model AddOn {
-  id    Int    @id @default(autoincrement())
-  uuid  String @unique @default(uuid())
-  name  String
-  price Float
-  unit  String
+//   filePath  String
+//   mediaType MediaType
 
-  @@map("add_ons")
-}
+//   isPrimary Boolean @default(false)
+
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@map("galleries")
+// }
+
+// model AreaPrice {
+//   id Int @id @default(autoincrement())
+
+//   areaId Int
+//   area   Area @relation(fields: [areaId], references: [id], onDelete: Cascade)
+
+//   reservationTypeId Int
+//   reservationType   ReservationType @relation(fields: [reservationTypeId], references: [id], onDelete: Cascade)
+
+//   price Decimal @db.Decimal(15, 2)
+
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@unique([areaId, reservationTypeId])
+//   @@map("area_prices")
+// }
+
+// model Addon {
+//   id Int @id @default(autoincrement())
+
+//   name        String
+//   price       Decimal @db.Decimal(15, 2)
+//   description String?
+
+//   isActive Boolean @default(true)
+
+//   addonReservations AddonReservation[]
+
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@map("addons")
+// }
+
+// model Reservation {
+//   id   Int    @id @default(autoincrement())
+//   uuid String @unique @default(uuid())
+
+//   bookingCode String @unique
+
+//   customerId Int
+//   customer   User @relation("CustomerReservations", fields: [customerId], references: [id])
+
+//   reservationTypeId Int
+//   reservationType   ReservationType @relation(fields: [reservationTypeId], references: [id])
+
+//   eventDate DateTime
+
+//   startTime DateTime
+//   endTime   DateTime
+
+//   totalAreaPrice  Decimal @default(0) @db.Decimal(15, 2)
+//   totalAddonPrice Decimal @default(0) @db.Decimal(15, 2)
+
+//   totalPrice       Decimal @default(0) @db.Decimal(15, 2)
+//   paidAmount       Decimal @default(0) @db.Decimal(15, 2)
+//   remainingBalance Decimal @default(0) @db.Decimal(15, 2)
+
+//   paymentStatus PaymentStatus @default(UNPAID)
+
+//   cancellationReason String?
+//   cancelledAt        DateTime?
+
+//   areaReservations  AreaReservation[]
+//   addonReservations AddonReservation[]
+
+//   paymentSchedules PaymentSchedule[]
+
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@map("reservations")
+// }
+
+// model AreaReservation {
+//   id Int @id @default(autoincrement())
+
+//   reservationId Int
+//   reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+
+//   areaId Int
+//   area   Area @relation(fields: [areaId], references: [id], onDelete: Cascade)
+
+//   priceSnapshot Decimal @db.Decimal(15, 2)
+//   subtotal      Decimal @db.Decimal(15, 2)
+
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@map("area_reservations")
+// }
+
+// model AddonReservation {
+//   id Int @id @default(autoincrement())
+
+//   reservationId Int
+//   reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+
+//   addonId Int
+//   addon   Addon @relation(fields: [addonId], references: [id], onDelete: Cascade)
+
+//   qty Int @default(1)
+
+//   priceSnapshot Decimal @db.Decimal(15, 2)
+//   subtotal      Decimal @db.Decimal(15, 2)
+
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@map("addon_reservations")
+// }
+
+// model PaymentSchedule {
+//   id Int @id @default(autoincrement())
+
+//   reservationId Int
+//   reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+
+//   installmentNumber Int
+
+//   amount Decimal @db.Decimal(15, 2)
+
+//   dueDate DateTime
+
+//   status PaymentScheduleStatus @default(PENDING)
+
+//   paymentProofs PaymentProof[]
+
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@map("payment_schedules")
+// }
+
+// model PaymentProof {
+//   id Int @id @default(autoincrement())
+
+//   paymentScheduleId Int
+//   paymentSchedule   PaymentSchedule @relation(fields: [paymentScheduleId], references: [id], onDelete: Cascade)
+
+//   amount Decimal @db.Decimal(15, 2)
+
+//   proofImage String
+
+//   senderName String
+
+//   uploadedAt DateTime @default(now())
+
+//   approvalStatus PaymentProofApprovalStatus @default(PENDING)
+
+//   approvedBy Int?
+//   approver   User? @relation("AdminApprovedProofs", fields: [approvedBy], references: [id])
+
+//   approvedAt DateTime?
+
+//   rejectionReason String?
+
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@map("payment_proofs")
+// }
