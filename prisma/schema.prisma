@@ -214,8 +214,9 @@ model Reservation {
   cancellationReason String?
   cancelledAt        DateTime?
 
-  areaReservations  AreaReservation[]
-  addonReservations AddonReservation[]
+  areaReservations               AreaReservation[]
+  addonReservations              AddonReservation[]
+  reservationRescheduleHistories ReservationRescheduleHistory[]
 
   // paymentSchedules PaymentSchedule[]
 
@@ -261,6 +262,25 @@ model AddonReservation {
   updatedAt DateTime @updatedAt
 
   @@map("addon_reservations")
+}
+
+model ReservationRescheduleHistory {
+  id Int @id @default(autoincrement())
+
+  reservationId Int
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+
+  oldStartDateTime DateTime
+  oldEndDateTime   DateTime
+
+  newStartDateTime DateTime
+  newEndDateTime   DateTime
+
+  reason String?
+
+  createdAt DateTime @default(now())
+
+  @@map("reservation_reschedule_histories")
 }
 
 // model PaymentSchedule {

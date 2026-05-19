@@ -120,3 +120,137 @@ export const createReservation = async (payload) => {
     return reservation;
   });
 };
+
+export const getAllReservation = async () => {
+  try {
+    const reservations = await prisma.reservation.findMany({
+      include: {
+        customer: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            whatsappNumber: true,
+            role: true,
+            isVerified: true,
+            googleAvatar: true,
+          },
+        },
+        reservationType: true,
+        areaReservations: {
+          include: {
+            area: true,
+          },
+        },
+        addonReservations: {
+          include: {
+            addon: true,
+          },
+        },
+      },
+    });
+    return reservations;
+  } catch (error) {
+    throw new Error("Failed to get reservations: " + error.message);
+  }
+};
+
+export const rescheduleReservation = async (reservationId, payload) => {
+  return prisma.$transaction(async (tx) => {
+    // 1. Find reservation
+    const reservation = await tx.reservation.findUnique({
+      where: {
+        id: reservationId,
+      },
+      include: {
+        reservationType: true,
+        areaReservations: true,
+      },
+    });
+
+    if (!reservation) {
+      throw new Error("Reservation not found");
+    }
+
+    // 2. Validate reservation status
+    const invalidStatuses = ["COMPLETED", "CANCELLED", "EXPIRED"];
+
+    if (invalidStatuses.includes(reservation.status)) {
+      throw new Error("Reservation cannot be rescheduled");
+    }
+
+    // 3. Validate duration
+    const start = new Date(payload.startDateTime);
+    const end = new Date(payload.endDateTime);
+    const durationHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+
+    if (
+      durationHours % reservation.reservationType.durationIntervalHour !==
+      0
+    ) {
+      throw new Error(
+        `Duration must be multiple of ${reservation.reservationType.durationIntervalHour} hours`,
+      );
+    }
+
+    // 4. Validate conflict date
+    const areaIds = reservation.areaReservations.map((area) => area.areaId);
+    const conflict = await tx.areaReservation.findFirst({
+      where: {
+        areaId: {
+          in: areaIds,
+        },
+
+        reservation: {
+          id: {
+            not: reservation.id,
+          },
+
+          status: {
+            in: ["WAITING_DP", "CONFIRMED"],
+          },
+
+          AND: [
+            {
+              startDateTime: { lt: end },
+            },
+            {
+              endDateTime: { gt: start },
+            },
+          ],
+        },
+      },
+    });
+
+    if (conflict) {
+      throw new Error("Area already booked");
+    }
+
+    // 5. Create reschedule history
+    await tx.reservationRescheduleHistory.create({
+      data: {
+        reservationId: reservation.id,
+        oldStartDateTime: reservation.startDateTime,
+        oldEndDateTime: reservation.endDateTime,
+        newStartDateTime: start,
+        newEndDateTime: end,
+        reason: payload.reason,
+      },
+    });
+
+    // 6. Update reservation
+    return tx.reservation.update({
+      where: {
+        id: reservation.id,
+      },
+      data: {
+        startDateTime: start,
+        endDateTime: end,
+      },
+    });
+  });
+};
+
+export const editAddonReservation = async () => {};
+
+export const editAreaReservation = async () => {};
