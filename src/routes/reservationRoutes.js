@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  cancel,
   getAll,
   makeReservation,
   reschedule,
@@ -17,5 +18,6 @@ router.patch(
   validate(reservationRescheduleSchema),
   reschedule,
 );
+router.patch("/:reservationId/cancel", cancel);
 
 export default router;

@@ -21,20 +21,27 @@ enum ReservationStatus {
   EXPIRED
 }
 
-// enum PaymentScheduleStatus {
-//   PENDING
-//   PARTIAL
-//   PAID
-//   OVERDUE
-//   CANCELLED
-// }
+enum PaymentStatus {
+  UNPAID
+  PARTIAL
+  PAID
+  OVERDUE
+}
 
-// enum PaymentProofApprovalStatus {
-//   PENDING
-//   APPROVED
-//   REJECTED
-//   CANCELLED
-// }
+enum PaymentScheduleStatus {
+  PENDING
+  PARTIAL
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentProofApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
 
 enum MediaType {
   IMAGE
@@ -60,8 +67,8 @@ model User {
   googleAvatar String?
   googleToken  String?
 
-  customerReservations Reservation[] @relation("CustomerReservations")
-  // adminApprovedProofs  PaymentProof[] @relation("AdminApprovedProofs")
+  customerReservations Reservation[]  @relation("CustomerReservations")
+  adminApprovedProofs  PaymentProof[] @relation("AdminApprovedProofs")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -96,7 +103,6 @@ model Area {
 
   galleries        Gallery[]
   areaPrices       AreaPrice[]
-  // areaReservations AreaReservation[]
   areaReservations AreaReservation[]
 
   @@map("areas")
@@ -209,7 +215,8 @@ model Reservation {
   paidAmount       Decimal @default(0) @db.Decimal(15, 2)
   remainingBalance Decimal @default(0) @db.Decimal(15, 2)
 
-  status ReservationStatus @default(WAITING_DP)
+  status        ReservationStatus @default(WAITING_DP)
+  paymentStatus PaymentStatus     @default(UNPAID)
 
   cancellationReason String?
   cancelledAt        DateTime?
@@ -218,7 +225,7 @@ model Reservation {
   addonReservations              AddonReservation[]
   reservationRescheduleHistories ReservationRescheduleHistory[]
 
-  // paymentSchedules PaymentSchedule[]
+  paymentSchedules PaymentSchedule[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -283,53 +290,53 @@ model ReservationRescheduleHistory {
   @@map("reservation_reschedule_histories")
 }
 
-// model PaymentSchedule {
-//   id Int @id @default(autoincrement())
+model PaymentSchedule {
+  id Int @id @default(autoincrement())
 
-//   reservationId Int
-//   reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  reservationId Int
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
 
-//   installmentNumber Int
+  installmentNumber Int
 
-//   amount Decimal @db.Decimal(15, 2)
+  amount Decimal @db.Decimal(15, 2)
 
-//   dueDate DateTime
+  dueDate DateTime
 
-//   status PaymentScheduleStatus @default(PENDING)
+  status PaymentScheduleStatus @default(PENDING)
 
-//   paymentProofs PaymentProof[]
+  paymentProofs PaymentProof[]
 
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-//   @@map("payment_schedules")
-// }
+  @@map("payment_schedules")
+}
 
-// model PaymentProof {
-//   id Int @id @default(autoincrement())
+model PaymentProof {
+  id Int @id @default(autoincrement())
 
-//   paymentScheduleId Int
-//   paymentSchedule   PaymentSchedule @relation(fields: [paymentScheduleId], references: [id], onDelete: Cascade)
+  paymentScheduleId Int
+  paymentSchedule   PaymentSchedule @relation(fields: [paymentScheduleId], references: [id], onDelete: Cascade)
 
-//   amount Decimal @db.Decimal(15, 2)
+  amount Decimal @db.Decimal(15, 2)
 
-//   proofImage String
+  proofImage String
 
-//   senderName String
+  senderName String
 
-//   uploadedAt DateTime @default(now())
+  uploadedAt DateTime @default(now())
 
-//   approvalStatus PaymentProofApprovalStatus @default(PENDING)
+  approvalStatus PaymentProofApprovalStatus @default(PENDING)
 
-//   approvedBy Int?
-//   approver   User? @relation("AdminApprovedProofs", fields: [approvedBy], references: [id])
+  approvedBy Int?
+  approver   User? @relation("AdminApprovedProofs", fields: [approvedBy], references: [id])
 
-//   approvedAt DateTime?
+  approvedAt DateTime?
 
-//   rejectionReason String?
+  rejectionReason String?
 
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-//   @@map("payment_proofs")
-// }
+  @@map("payment_proofs")
+}

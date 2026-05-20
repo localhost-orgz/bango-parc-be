@@ -6,6 +6,7 @@ export const reservationSchema = z.object({
     reservationTypeId: z.number(),
     startDateTime: z.iso.datetime(),
     endDateTime: z.iso.datetime(),
+    installment: z.number().optional(),
 
     areas: z.array(
       z.object({
@@ -21,5 +22,11 @@ export const reservationSchema = z.object({
         }),
       )
       .optional(),
+  }),
+});
+
+export const cancelReservationSchema = z.object({
+  body: z.object({
+    cancellationReason: z.string().min(5, "Reason too short"),
   }),
 });

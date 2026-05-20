@@ -1,5 +1,5 @@
 import { prisma } from "../config/db.js";
-import { Prisma } from "../generated/index.js";
+import { Prisma, ReservationStatus } from "../generated/index.js";
 
 export const createReservation = async (payload) => {
   return await prisma.$transaction(async (tx) => {
@@ -17,6 +17,8 @@ export const createReservation = async (payload) => {
     // 2. Calculate Price (areas & addons)
     let totalAreaPrice = 0;
     let totalAddonPrice = 0;
+    const start = new Date(payload.startDateTime);
+    const end = new Date(payload.endDateTime);
 
     // --- Area Reservation
     const areaReservation = [];
@@ -32,11 +34,7 @@ export const createReservation = async (payload) => {
         throw new Error(`Area ${item.areaId} has no price`);
       }
 
-      totalAreaPrice += Number(areaPrice.price);
-
       // calculate area subtotal
-      const start = new Date(payload.startDateTime);
-      const end = new Date(payload.endDateTime);
       const durationInHours =
         (end.getTime() - start.getTime()) / (1000 * 60 * 60);
 
@@ -53,6 +51,8 @@ export const createReservation = async (payload) => {
         priceSnapshot: areaPrice.price,
         subtotal: areaSubtotal,
       });
+
+      totalAreaPrice += Number(areaSubtotal);
     }
 
     // --- Addon Reservation
@@ -117,7 +117,101 @@ export const createReservation = async (payload) => {
       },
     });
 
-    return reservation;
+    // 4. Generate payment schedule
+    const isWedding = reservationType.name.toLowerCase().includes("wedding");
+
+    const schedules = [];
+
+    if (!isWedding) {
+      const dp = totalPrice * 0.5;
+
+      schedules.push({
+        reservationId: reservation.id,
+        installmentNumber: 1,
+        amount: dp,
+        dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      });
+
+      schedules.push({
+        reservationId: reservation.id,
+        installmentNumber: 2,
+        amount: totalPrice - dp,
+        dueDate: new Date(start.getTime() - 3 * 24 * 60 * 60 * 1000),
+      });
+    } else {
+      const totalInstallment = payload.installment ?? 3;
+      if (totalInstallment > 3) {
+        throw new Error("Maximum installment is 3");
+      }
+
+      const bookingDate = new Date();
+
+      // Pelunasan maksimal H-14
+      const finalDueDate = new Date(
+        reservation.startDateTime.getTime() - 14 * 24 * 60 * 60 * 1000,
+      );
+
+      // Event terlalu dekat
+      if (bookingDate >= finalDueDate) {
+        throw new Error(
+          "Wedding reservation must be booked at least 14 days before event",
+        );
+      }
+
+      const baseAmount = Math.floor(totalPrice / totalInstallment);
+
+      const remainder = totalPrice - baseAmount * totalInstallment;
+
+      // Termin 1 → DP (1x24 jam)
+      schedules.push({
+        reservationId: reservation.id,
+        installmentNumber: 1,
+        amount: baseAmount,
+        dueDate: new Date(bookingDate.getTime() + 24 * 60 * 60 * 1000),
+      });
+
+      // Jika ada termin tengah
+      if (totalInstallment > 2) {
+        const availableDuration =
+          finalDueDate.getTime() - bookingDate.getTime();
+
+        const interval = availableDuration / (totalInstallment - 1);
+
+        for (let i = 2; i < totalInstallment; i++) {
+          schedules.push({
+            reservationId: reservation.id,
+            installmentNumber: i,
+            amount: baseAmount,
+            dueDate: new Date(bookingDate.getTime() + interval * (i - 1)),
+          });
+        }
+      }
+
+      // Termin terakhir → H-14
+      if (totalInstallment > 1) {
+        schedules.push({
+          reservationId: reservation.id,
+          installmentNumber: totalInstallment,
+          amount: baseAmount + remainder,
+          dueDate: finalDueDate,
+        });
+      }
+    }
+
+    await tx.paymentSchedule.createMany({
+      data: schedules,
+    });
+
+    return await tx.reservation.findUnique({
+      where: {
+        id: reservation.id,
+      },
+      include: {
+        paymentSchedules: true,
+        areaReservations: true,
+        addonReservations: true,
+      },
+    });
   });
 };
 
@@ -147,6 +241,7 @@ export const getAllReservation = async () => {
             addon: true,
           },
         },
+        paymentSchedules: true,
       },
     });
     return reservations;
@@ -248,6 +343,61 @@ export const rescheduleReservation = async (reservationId, payload) => {
         endDateTime: end,
       },
     });
+  });
+};
+
+export const cancelReservation = async (reservationId, reason) => {
+  return prisma.$transaction(async (tx) => {
+    // 1. Find reservation
+    const reservation = await prisma.reservation.findUnique({
+      where: { id: reservationId },
+      include: { paymentSchedules: true },
+    });
+
+    if (!reservation) {
+      throw new Error("Reservation not found");
+    }
+
+    // 2. Validate status
+    const invalidStatuses = [
+      ReservationStatus.COMPLETED,
+      ReservationStatus.ONGOING,
+      ReservationStatus.CANCELLED,
+      ReservationStatus.EXPIRED,
+    ];
+
+    if (invalidStatuses.includes(reservation.status)) {
+      throw new Error(
+        `Cannot cancel reservation with status ${reservation.status}`,
+      );
+    }
+
+    // 3. Update reservation & Payment schedule
+    const updatedReservation = await tx.reservation.update({
+      where: {
+        id: reservation.id,
+      },
+
+      data: {
+        status: ReservationStatus.CANCELLED,
+        cancellationReason: reason,
+        cancelledAt: new Date(),
+      },
+    });
+
+    await tx.paymentSchedule.updateMany({
+      where: {
+        reservationId: reservation.id,
+        status: {
+          in: ["PENDING", "PARTIAL"],
+        },
+      },
+      data: {
+        status: "CANCELLED",
+      },
+    });
+
+    return updatedReservation;
   });
 };
 

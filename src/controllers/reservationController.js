@@ -2,6 +2,7 @@ import {
   createReservation,
   getAllReservation,
   rescheduleReservation,
+  cancelReservation,
 } from "../services/reservationService.js";
 
 export const makeReservation = async (req, res) => {
@@ -45,6 +46,28 @@ export const reschedule = async (req, res) => {
   } catch (error) {
     return res.status(400).json({
       message: error.message || "Failed to fetch reservations",
+    });
+  }
+};
+
+export const cancel = async (req, res) => {
+  try {
+    const reservationId = Number(req.params.reservationId);
+    const { cancellationReason } = req.body;
+
+    const cancelledReservation = await cancelReservation(
+      reservationId,
+      cancellationReason,
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Reservation cancelled successfully",
+      data: cancelledReservation,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message || "Failed to cancel reservation",
     });
   }
 };
