@@ -43,11 +43,13 @@ export const getAreaById = async (req, res) => {
 export const updateArea = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const { name, description, facilityIds } = req.body;
+    const { name, description, facilityIds, areaPrices } = req.body;
     const area = await areaService.updateArea(
       id,
-      { name, description },
+      name,
+      description,
       facilityIds,
+      areaPrices,
     );
     res.status(200).json({ success: true, data: area });
   } catch (error) {

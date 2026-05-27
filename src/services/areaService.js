@@ -100,7 +100,13 @@ export const getAreaById = async (id) =>
     include: areaInclude,
   });
 
-export const updateArea = async (id, { name, description }, facilityIds) => {
+export const updateArea = async (
+  id,
+  name,
+  description,
+  facilityIds,
+  areaPrices,
+) => {
   const existingArea = await prisma.area.findUnique({ where: { id } });
   if (!existingArea) {
     throw new Error("Area not found");
@@ -130,6 +136,42 @@ export const updateArea = async (id, { name, description }, facilityIds) => {
     data.areaFacilities = {
       deleteMany: {},
       create: facilityIds.map((facilityId) => ({ facilityId })),
+    };
+  }
+
+  if (areaPrices !== undefined) {
+    if (areaPrices.length > 0) {
+      const reservationTypeIds = areaPrices.map((ap) => ap.reservationTypeId);
+
+      const validReservationTypeIds = reservationTypeIds.filter(
+        (id) => id !== null && id !== undefined,
+      );
+
+      if (validReservationTypeIds.length > 0) {
+        const foundReservationTypes = await prisma.reservationType.findMany({
+          where: { id: { in: validReservationTypeIds } },
+          select: { id: true },
+        });
+
+        const foundIds = new Set(foundReservationTypes.map((rt) => rt.id));
+        const missingIds = validReservationTypeIds.filter(
+          (reservationTypeId) => !foundIds.has(reservationTypeId),
+        );
+
+        if (missingIds.length > 0) {
+          throw new Error(
+            `ReservationType IDs not found: ${missingIds.join(", ")}`,
+          );
+        }
+      }
+    }
+
+    data.areaPrices = {
+      deleteMany: {},
+      create: areaPrices.map((areaPrice) => ({
+        reservationTypeId: areaPrice.reservationTypeId,
+        price: areaPrice.price,
+      })),
     };
   }
 

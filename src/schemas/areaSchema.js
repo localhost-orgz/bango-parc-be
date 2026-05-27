@@ -21,5 +21,6 @@ export const updateAreaSchema = z.object({
     name: areaBody.name.optional(),
     description: areaBody.description,
     facilityIds: areaBody.facilityIds,
+    areaPrices: areaBody.areaPrices,
   }),
 });
