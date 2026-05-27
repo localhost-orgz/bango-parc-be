@@ -75,10 +75,13 @@ export const createArea = async (
     data: {
       name,
       description,
-      ...(facilityIds.length && {
+      ...(facilityIds.length > 0 && {
         areaFacilities: {
           create: facilityIds.map((facilityId) => ({ facilityId })),
         },
+      }),
+
+      ...(areaPrices.length > 0 && {
         areaPrices: {
           create: areaPrices.map((areaPrice) => ({
             reservationTypeId: areaPrice.reservationTypeId,

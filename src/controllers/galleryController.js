@@ -1,21 +1,17 @@
 import { addGallery, removeFileService } from "../services/galleryService.js";
+import { uploadToSupabase } from "../utils/supabaseUpload.js";
 
 export const addImages = async (req, res) => {
   try {
     const { areaId, title, description, mediaType, isPrimary } = req.body;
-    const file = req.file;
 
-    if (!file) {
-      return res.status(400).json({ error: "No file uploaded" });
-    }
-
-    const filePath = `uploads/gallery/${file.filename}`;
+    const imageUrl = await uploadToSupabase(req.file, "gallery");
 
     const gallery = await addGallery(
       Number(areaId),
       title,
       description ?? null,
-      filePath,
+      imageUrl,
       mediaType,
       isPrimary === "true" || isPrimary === true,
     );

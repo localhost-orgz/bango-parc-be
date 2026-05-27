@@ -4,6 +4,7 @@ import {
   rejectPayment,
   getAllPaymentProof,
 } from "../services/paymentService.js";
+import { uploadToSupabase } from "../utils/supabaseUpload.js";
 
 export const getAll = async (req, res) => {
   try {
@@ -21,12 +22,11 @@ export const upload = async (req, res) => {
   try {
     const { paymentScheduleId, amount, senderName } = req.body;
 
-    const file = req.file;
-    const filePath = `uploads/payment/${file.filename}`;
+    const imageUrl = await uploadToSupabase(req.file, "payments");
 
     const result = await uploadPaymentProof(
       paymentScheduleId,
-      filePath,
+      imageUrl,
       amount,
       senderName,
     );

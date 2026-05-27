@@ -6,7 +6,7 @@ export const createArea = async (req, res) => {
     const area = await areaService.createArea(
       { name, description },
       facilityIds ?? [],
-      areaPrices ?? [],
+      areaPrices,
     );
     res.status(201).json({ success: true, data: area });
   } catch (error) {
@@ -35,6 +35,7 @@ export const getAreaById = async (req, res) => {
     }
     res.status(200).json({ success: true, data: area });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
