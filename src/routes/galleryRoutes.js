@@ -1,10 +1,16 @@
 import express from "express";
 import { validate } from "../middlewares/validate.js";
 import { gallerySchema } from "../schemas/gallerySchema.js";
-import { addImages, removeFile } from "../controllers/galleryController.js";
+import {
+  getImages,
+  addImages,
+  removeFile,
+} from "../controllers/galleryController.js";
 import uploadMiddleware from "../middlewares/upload.js";
 
 const router = express.Router();
+
+router.get("/", getImages);
 
 router.post(
   "/",

@@ -2,6 +2,20 @@ import { prisma } from "../config/db.js";
 import fs from "fs/promises";
 import path from "path";
 
+export const getGallery = async (areaId = null) => {
+  try {
+    const whereClause = areaId ? { areaId } : {};
+    const galleries = await prisma.gallery.findMany({
+      where: whereClause,
+      orderBy: [{ isPrimary: "desc" }, { createdAt: "desc" }],
+    });
+    return galleries;
+  } catch (error) {
+    console.error("Error retrieving galleries:", error);
+    throw error;
+  }
+};
+
 export const addGallery = async (
   areaId,
   title,

@@ -1,5 +1,22 @@
-import { addGallery, removeFileService } from "../services/galleryService.js";
+import {
+  getGallery,
+  addGallery,
+  removeFileService,
+} from "../services/galleryService.js";
 import { uploadToSupabase } from "../utils/supabaseUpload.js";
+
+export const getImages = async (req, res) => {
+  try {
+    const { areaId } = req.query;
+    const galleries = await getGallery(areaId ? Number(areaId) : null);
+    res.status(200).json({
+      message: "Gallery images retrieved successfully",
+      galleries,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Internal Server Error" });
+  }
+};
 
 export const addImages = async (req, res) => {
   try {
