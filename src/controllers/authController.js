@@ -45,10 +45,9 @@ export const verifyUser = async (req, res) => {
 
     const updatedUser = await verifyEmailToken(token);
 
-    res.status(200).json({
-      message: "Email verified successfully.",
-      user: updatedUser,
-    });
+    const FRONTEND_URL =
+      process.env.FRONTEND_URL || "https://bango-parc.vercel.app";
+    return res.redirect(`${FRONTEND_URL}`);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
