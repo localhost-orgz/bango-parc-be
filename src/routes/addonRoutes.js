@@ -8,13 +8,15 @@ import {
   getAllAddons,
   updateAddon,
 } from "../controllers/addonController.js";
+import authMiddleware from "../middlewares/authMiddleware.js";
+import isAdmin from "../middlewares/isAdminMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", validate(addonSchema), createAddon);
+router.post("/", authMiddleware, isAdmin, validate(addonSchema), createAddon);
 router.get("/", getAllAddons);
 router.get("/:id", getAddonById);
-router.put("/:id", validate(addonSchema), updateAddon);
-router.delete("/:id", deleteAddon);
+router.put("/:id", authMiddleware, isAdmin, validate(addonSchema), updateAddon);
+router.delete("/:id", authMiddleware, isAdmin, deleteAddon);
 
 export default router;
