@@ -21,7 +21,8 @@ export const makeReservation = async (req, res) => {
 
 export const getAll = async (req, res) => {
   try {
-    const reservations = await getAllReservation();
+    const { startDate, endDate } = req.query;
+    const reservations = await getAllReservation(startDate, endDate);
     return res.status(200).json({
       message: "Reservations fetched successfully",
       data: reservations,

@@ -215,9 +215,26 @@ export const createReservation = async (payload) => {
   });
 };
 
-export const getAllReservation = async () => {
+export const getAllReservation = async (startDate, endDate) => {
   try {
+    const where = {};
+    if (startDate && endDate) {
+      where.startDateTime = {
+        gte: new Date(startDate),
+        lte: new Date(endDate),
+      };
+    } else if (startDate) {
+      where.startDateTime = {
+        gte: new Date(startDate),
+      };
+    } else if (endDate) {
+      where.startDateTime = {
+        lte: new Date(endDate),
+      };
+    }
+
     const reservations = await prisma.reservation.findMany({
+      where,
       include: {
         customer: {
           select: {
