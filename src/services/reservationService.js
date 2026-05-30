@@ -215,7 +215,7 @@ export const createReservation = async (payload) => {
   });
 };
 
-export const getAllReservation = async (startDate, endDate) => {
+export const getAllReservation = async (startDate, endDate, userId = null) => {
   try {
     const where = {};
     if (startDate && endDate) {
@@ -231,6 +231,9 @@ export const getAllReservation = async (startDate, endDate) => {
       where.startDateTime = {
         lte: new Date(endDate),
       };
+    }
+    if (userId) {
+      where.customerId = userId;
     }
 
     const reservations = await prisma.reservation.findMany({

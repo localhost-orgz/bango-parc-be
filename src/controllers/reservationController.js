@@ -34,6 +34,22 @@ export const getAll = async (req, res) => {
   }
 };
 
+export const getCustomerReservation = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const reservations = await getAllReservation(null, null, userId);
+
+    return res.status(200).json({
+      message: "Reservations fetched successfully",
+      data: reservations,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message || "Failed to fetch reservations",
+    });
+  }
+};
+
 export const reschedule = async (req, res) => {
   try {
     const reservationId = Number(req.params.reservationId);
