@@ -2,9 +2,9 @@ import * as areaService from "../services/areaService.js";
 
 export const createArea = async (req, res) => {
   try {
-    const { name, description, facilityIds, areaPrices } = req.body;
+    const { name, description, link360, facilityIds, areaPrices } = req.body;
     const area = await areaService.createArea(
-      { name, description },
+      { name, description, link360 },
       facilityIds ?? [],
       areaPrices,
     );
@@ -43,11 +43,12 @@ export const getAreaById = async (req, res) => {
 export const updateArea = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const { name, description, facilityIds, areaPrices } = req.body;
+    const { name, description, link360, facilityIds, areaPrices } = req.body;
     const area = await areaService.updateArea(
       id,
       name,
       description,
+      link360,
       facilityIds,
       areaPrices,
     );

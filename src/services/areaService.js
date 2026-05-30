@@ -29,7 +29,7 @@ export const getAllArea = async (search) => {
 };
 
 export const createArea = async (
-  { name, description },
+  { name, description, link360 },
   facilityIds = [],
   areaPrices = [],
 ) => {
@@ -75,6 +75,7 @@ export const createArea = async (
     data: {
       name,
       description,
+      link360,
       ...(facilityIds.length > 0 && {
         areaFacilities: {
           create: facilityIds.map((facilityId) => ({ facilityId })),
@@ -104,6 +105,7 @@ export const updateArea = async (
   id,
   name,
   description,
+  link360,
   facilityIds,
   areaPrices,
 ) => {
@@ -115,6 +117,7 @@ export const updateArea = async (
   const data = {};
   if (name !== undefined) data.name = name;
   if (description !== undefined) data.description = description;
+  if (link360 !== undefined) data.link360 = link360;
 
   if (facilityIds !== undefined) {
     if (facilityIds.length > 0) {

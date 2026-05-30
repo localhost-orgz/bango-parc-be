@@ -21,7 +21,6 @@ export const addGallery = async (
   title,
   description,
   filePath,
-  mediaType,
   isPrimary,
 ) => {
   try {
@@ -31,7 +30,6 @@ export const addGallery = async (
         title,
         description,
         filePath,
-        mediaType,
         isPrimary,
       },
     });

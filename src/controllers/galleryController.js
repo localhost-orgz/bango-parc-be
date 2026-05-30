@@ -20,7 +20,7 @@ export const getImages = async (req, res) => {
 
 export const addImages = async (req, res) => {
   try {
-    const { areaId, title, description, mediaType, isPrimary } = req.body;
+    const { areaId, title, description, isPrimary } = req.body;
 
     const imageUrl = await uploadToSupabase(req.file, "gallery");
 
@@ -29,7 +29,6 @@ export const addImages = async (req, res) => {
       title,
       description ?? null,
       imageUrl,
-      mediaType,
       isPrimary === "true" || isPrimary === true,
     );
 
