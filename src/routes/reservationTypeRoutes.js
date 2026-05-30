@@ -8,13 +8,27 @@ import {
   updateReservationType,
 } from "../controllers/reservationTypeController.js";
 import { reservationTypeSchema } from "../schemas/reservationTypeSchema.js";
+import authMiddleware from "../middlewares/authMiddleware.js";
+import isAdmin from "../middlewares/isAdminMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", validate(reservationTypeSchema), createReservationType);
+router.post(
+  "/",
+  authMiddleware,
+  isAdmin,
+  validate(reservationTypeSchema),
+  createReservationType,
+);
 router.get("/", getAllReservationTypes);
 router.get("/:id", getReservationTypeById);
-router.put("/:id", validate(reservationTypeSchema), updateReservationType);
-router.delete("/:id", deleteReservationType);
+router.put(
+  "/:id",
+  authMiddleware,
+  isAdmin,
+  validate(reservationTypeSchema),
+  updateReservationType,
+);
+router.delete("/:id", authMiddleware, isAdmin, deleteReservationType);
 
 export default router;

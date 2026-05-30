@@ -72,7 +72,7 @@ async function main() {
     reservations.push({
       bookingCode: `BKP${(10000 + i).toString()}`,
       customerId: createdCustomers[i].id,
-      reservationTypeId: (i % 2) + 2,
+      reservationTypeId: i % 2 === 0 ? 1 : 3,
 
       startDateTime: start,
       endDateTime: end,
