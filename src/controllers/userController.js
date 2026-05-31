@@ -43,3 +43,17 @@ export const getUsers = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+export const getUserDetail = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) {
+      return res.status(400).json({ message: "Missing userId parameter" });
+    }
+
+    const userDetail = await userService.getUserDetail(Number(userId));
+    res.status(200).json({ user: userDetail });
+  } catch (error) {
+    res.status(404).json({ message: error.message });
+  }
+};
