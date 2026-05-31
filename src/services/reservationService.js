@@ -123,7 +123,12 @@ export const createReservation = async (payload) => {
     const schedules = [];
 
     if (!isWedding) {
-      const dp = totalPrice * 0.5;
+      let dp;
+      if (totalPrice > 2000000) {
+        dp = 1000000;
+      } else {
+        dp = totalPrice * 0.5;
+      }
 
       schedules.push({
         reservationId: reservation.id,
@@ -158,41 +163,55 @@ export const createReservation = async (payload) => {
         );
       }
 
-      const baseAmount = Math.floor(totalPrice / totalInstallment);
+      // Hitung DP sesuai aturan: >2jt = 1jt, <2jt = 50%
+      let dp;
+      if (totalPrice > 2000000) {
+        dp = 1000000;
+      } else {
+        dp = totalPrice * 0.5;
+      }
 
-      const remainder = totalPrice - baseAmount * totalInstallment;
+      // Tersisa untuk pelunasan setelah DP
+      const sisa = totalPrice - dp;
 
       // Termin 1 → DP (1x24 jam)
       schedules.push({
         reservationId: reservation.id,
         installmentNumber: 1,
-        amount: baseAmount,
+        amount: dp,
         dueDate: new Date(bookingDate.getTime() + 24 * 60 * 60 * 1000),
       });
 
-      // Jika ada termin tengah
-      if (totalInstallment > 2) {
-        const availableDuration =
-          finalDueDate.getTime() - bookingDate.getTime();
-
-        const interval = availableDuration / (totalInstallment - 1);
-
-        for (let i = 2; i < totalInstallment; i++) {
-          schedules.push({
-            reservationId: reservation.id,
-            installmentNumber: i,
-            amount: baseAmount,
-            dueDate: new Date(bookingDate.getTime() + interval * (i - 1)),
-          });
-        }
-      }
-
-      // Termin terakhir → H-14
-      if (totalInstallment > 1) {
+      // Jika hanya 1 termin (harusnya ga mungkin tapi jaga-jaga)
+      if (totalInstallment === 1) {
+        // sudah masuk semua di dp
+      } else if (totalInstallment === 2) {
+        // Termin 2 → Sisa (pelunasan H-14)
         schedules.push({
           reservationId: reservation.id,
-          installmentNumber: totalInstallment,
-          amount: baseAmount + remainder,
+          installmentNumber: 2,
+          amount: sisa,
+          dueDate: finalDueDate,
+        });
+      } else {
+        // totalInstallment === 3, cicilan tengah & akhir
+        // Cicilan tengah: dibagi rata dari sisa, bagi 2 termin
+        const tengah = Math.floor(sisa / 2);
+        const akhir = sisa - tengah;
+
+        // Termin 2 → Cicilan kedua (tengah periode dari booking sampai H-14)
+        const interval = (finalDueDate.getTime() - bookingDate.getTime()) / 2;
+        schedules.push({
+          reservationId: reservation.id,
+          installmentNumber: 2,
+          amount: tengah,
+          dueDate: new Date(bookingDate.getTime() + interval),
+        });
+        // Termin 3 (pelunasan H-14)
+        schedules.push({
+          reservationId: reservation.id,
+          installmentNumber: 3,
+          amount: akhir,
           dueDate: finalDueDate,
         });
       }
