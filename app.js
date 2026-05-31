@@ -8,6 +8,7 @@ import reservationRoutes from "./src/routes/reservationRoutes.js";
 import facilityRoutes from "./src/routes/facilityRoutes.js";
 import reservationTypeRoutes from "./src/routes/reservationTypeRoutes.js";
 import paymentRoutes from "./src/routes/paymentRoutes.js";
+import userRoutes from "./src/routes/authRoutes.js";
 
 const app = express();
 app.use(express.json());
@@ -22,6 +23,7 @@ app.get("/health", (req, res) => {
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 app.use("/api/area", areaRoutes);
 app.use("/api/gallery", galleryRoutes);
 app.use("/api/addon", addonRoutes);
