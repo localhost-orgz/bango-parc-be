@@ -8,7 +8,7 @@ import reservationRoutes from "./src/routes/reservationRoutes.js";
 import facilityRoutes from "./src/routes/facilityRoutes.js";
 import reservationTypeRoutes from "./src/routes/reservationTypeRoutes.js";
 import paymentRoutes from "./src/routes/paymentRoutes.js";
-import userRoutes from "./src/routes/authRoutes.js";
+import userRoutes from "./src/routes/userRoutes.js";
 
 const app = express();
 app.use(express.json());

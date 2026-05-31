@@ -2,20 +2,33 @@ import * as userService from "../services/userService.js";
 
 export const getUsers = async (req, res) => {
   try {
-    const { skip, take, sort, order, search } = req.query;
+    const { skip, take, sort, order, search, role } = req.query;
     const options = {};
 
     if (skip !== undefined) options.skip = parseInt(skip);
     if (take !== undefined) options.take = parseInt(take);
 
+    // Build where clause for search and role
+    let where = {};
+
     if (search) {
-      options.where = {
-        OR: [
-          { fullName: { contains: search, mode: "insensitive" } },
-          { email: { contains: search, mode: "insensitive" } },
-          { whatsappNumber: { contains: search, mode: "insensitive" } },
-        ],
-      };
+      where.OR = [
+        { fullName: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+        { whatsappNumber: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    if (role) {
+      if (where.OR) {
+        where.AND = [{ role: role }];
+      } else {
+        where.role = role;
+      }
+    }
+
+    if (Object.keys(where).length > 0) {
+      options.where = where;
     }
 
     if (sort && order) {
