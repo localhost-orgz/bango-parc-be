@@ -7,7 +7,7 @@ import { prisma } from "../config/db.js";
  * 3. Revenue bulan ini
  * 4. Tingkat Okupansi bulan ini per hari ini
  */
-export const getCardInfo = async () => {
+export const getCardInfo = async (yearParam) => {
   // Ambil tanggal hari ini
   const now = new Date();
   const year = now.getFullYear();
@@ -119,15 +119,27 @@ export const getCardInfo = async () => {
   // Ambil jumlah reservasi per bulan untuk 12 bulan terakhir
   const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
 
-  // Prisma groupBy tidak support expression (to_char) di by.
   // Pakai $queryRaw agar bisa group by formatted YYYY-MM.
-  const reservationsPerMonthRaw = await prisma.$queryRaw`
-    SELECT to_char("startDateTime", 'YYYY-MM') AS month, COUNT(*) AS count
-    FROM "reservations"
-    WHERE "startDateTime" >= ${twelveMonthsAgo} AND "startDateTime" <= ${now}
-    GROUP BY month
-    ORDER BY month ASC
-  `;
+  let reservationsPerMonthRaw;
+  if (yearParam) {
+    const startOfYear = new Date(yearParam, 0, 1);
+    const endOfYear = new Date(yearParam, 11, 31, 23, 59, 59, 999);
+    reservationsPerMonthRaw = await prisma.$queryRaw`
+      SELECT to_char("startDateTime", 'YYYY-MM') AS month, COUNT(*) AS count
+      FROM "reservations"
+      WHERE "startDateTime" >= ${startOfYear} AND "startDateTime" <= ${endOfYear}
+      GROUP BY month
+      ORDER BY month ASC
+    `;
+  } else {
+    reservationsPerMonthRaw = await prisma.$queryRaw`
+      SELECT to_char("startDateTime", 'YYYY-MM') AS month, COUNT(*) AS count
+      FROM "reservations"
+      WHERE "startDateTime" >= ${twelveMonthsAgo} AND "startDateTime" <= ${now}
+      GROUP BY month
+      ORDER BY month ASC
+    `;
+  }
 
   // Format data menjadi { month: 'YYYY-MM', count: N }
   const reservationsPerMonth = reservationsPerMonthRaw.map((item) => ({
