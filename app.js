@@ -9,6 +9,7 @@ import facilityRoutes from "./src/routes/facilityRoutes.js";
 import reservationTypeRoutes from "./src/routes/reservationTypeRoutes.js";
 import paymentRoutes from "./src/routes/paymentRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
+import dashboardRoutes from "./src/routes/dashboardRoutes.js";
 
 const app = express();
 app.use(express.json());
@@ -31,6 +32,7 @@ app.use("/api/reservation", reservationRoutes);
 app.use("/api/facility", facilityRoutes);
 app.use("/api/reservation-type", reservationTypeRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
