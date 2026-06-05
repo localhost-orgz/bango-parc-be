@@ -7,23 +7,29 @@ import { prisma } from "../config/db.js";
  * 3. Revenue bulan ini
  * 4. Tingkat Okupansi bulan ini per hari ini
  */
-export const getCardInfo = async (yearParam) => {
+export const getCardInfo = async (monthParam, yearParam) => {
   // Ambil tanggal hari ini
   const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
 
-  // Awal dan akhir bulan ini
+  // Gunakan monthParam & yearParam jika ada, jika tidak pakai bulan & tahun sekarang
+  const year = yearParam ? parseInt(yearParam) : now.getFullYear();
+  // monthParam: 1 (Jan) ... 12 (Des), Date JS: 0 ... 11
+  const month =
+    monthParam !== undefined && monthParam !== null
+      ? parseInt(monthParam) - 1
+      : now.getMonth();
+
+  // Awal dan akhir bulan ini (pakai param/bulan aktif)
   const startOfThisMonth = new Date(year, month, 1, 0, 0, 0);
   const endOfThisMonth = new Date(year, month + 1, 0, 23, 59, 59, 999);
 
-  // Awal dan akhir bulan lalu
+  // Awal dan akhir bulan lalu (relatif terhadap param/jika ada)
   const monthLast = month - 1 >= 0 ? month - 1 : 11;
   const yearLast = month - 1 >= 0 ? year : year - 1;
   const startOfLastMonth = new Date(yearLast, monthLast, 1, 0, 0, 0);
   const endOfLastMonth = new Date(yearLast, monthLast + 1, 0, 23, 59, 59, 999);
 
-  // 1. Reservasi bulan ini
+  // 1. Reservasi bulan ini (by param)
   const countThisMonth = await prisma.reservation.count({
     where: {
       startDateTime: {
@@ -33,7 +39,7 @@ export const getCardInfo = async (yearParam) => {
     },
   });
 
-  // Reservasi bulan lalu
+  // Reservasi bulan lalu (by param)
   const countLastMonth = await prisma.reservation.count({
     where: {
       startDateTime: {
@@ -43,14 +49,14 @@ export const getCardInfo = async (yearParam) => {
     },
   });
 
-  // 2. Jumlah pesanan waiting verifikasi (WAITING_DP)
+  // 2. Jumlah pesanan waiting verifikasi (WAITING_DP) — tidak di-filter bulan
   const waitingVerification = await prisma.reservation.count({
     where: {
       status: "WAITING_DP",
     },
   });
 
-  // 3. Revenue bulan ini (jumlah totalPrice dari reservation bulan ini)
+  // 3. Revenue bulan ini (jumlah totalPrice dari reservation bulan ini — param)
   const revenueThisMonthRes = await prisma.reservation.aggregate({
     _sum: { totalPrice: true },
     where: {
@@ -62,24 +68,35 @@ export const getCardInfo = async (yearParam) => {
   });
   const revenueThisMonth = Number(revenueThisMonthRes._sum.totalPrice) || 0;
 
-  // 4. Tingkat Okupansi bulan ini per hari ini
-  // Okupansi = total jam area dipakai / total jam ketersediaan area (bulan ini per hari ini)
-  // Asumsi: Setiap hari penuh tersedia untuk tiap area, tiap reservasi (areaReservations) punya startDateTime & endDateTime pada reservasinya
-  // Pertama, ambil semua area (jumlah area)
+  // 4. Tingkat Okupansi bulan ini per hari ini (gunakan param, tapi day/trunc hanya sampai hari ini jika lihat bulan ini)
+  // Okupansi = total jam area dipakai / total jam ketersediaan area (bulan ini per hari X)
+  // Ambil semua area (jumlah area)
   const allArea = await prisma.area.count();
 
-  // Hitung hari dalam bulan ini s/d hari ini
-  const lastDay = now.getDate(); // tanggal ke-N hari ini
+  // Jika param sama dgn bulan sekarang dan tahun sekarang, ambil hanya sampai hari ini; jika melihat bulan lampau, ambil total hari di bulan itu
+  let referenceDate;
+  let lastDay;
+  if (month === now.getMonth() && year === now.getFullYear()) {
+    // bulan berjalan, s/d hari ini
+    referenceDate = now;
+    lastDay = now.getDate();
+  } else {
+    // bulan lalu atau bulan manapun, ambil seluruh hari dalam bulan tsb
+    const lastDateObj = new Date(year, month + 1, 0);
+    referenceDate = lastDateObj;
+    lastDay = lastDateObj.getDate();
+  }
+
   // total jam tersedia = allArea * lastDay * 24
   const totalAvailableHours = allArea * lastDay * 24;
 
-  // Ambil semua reservasi bulan ini (beserta areaReservations) yg sudah/confimed/menunggu_dp
+  // Ambil semua reservasi di bulan ini (pakai param - dari 1 s/d referenceDate)
   const areaReservations = await prisma.areaReservation.findMany({
     where: {
       reservation: {
         startDateTime: {
           gte: startOfThisMonth,
-          lte: now, // only sampai hari ini!
+          lte: referenceDate, // sampai hari yang sesuai
         },
         status: {
           in: ["WAITING_DP", "CONFIRMED"],
@@ -91,17 +108,15 @@ export const getCardInfo = async (yearParam) => {
     },
   });
 
-  // Hitung total jam dipakai dalam bulan ini s/d hari ini
+  // Hitung total jam dipakai dalam bulan ini s/d hari sesuai reference
   let totalUsedHours = 0;
   for (const ar of areaReservations) {
     const res = ar.reservation;
-    // Validasi res start-end hanya di bulan ini s/d hari ini.
-    // Ambil waktu antara res.startDateTime & res.endDateTime,
-    // tapi jika di luar range bulan ini/hari ini, di-trim
+    // Validasi res start-end hanya di bulan ini s/d hari target (referenceDate)
     let start = res.startDateTime;
     let end = res.endDateTime;
     if (start < startOfThisMonth) start = startOfThisMonth;
-    if (end > now) end = now;
+    if (end > referenceDate) end = referenceDate;
     let dur = (end - start) / (1000 * 60 * 60); // jam
     if (dur < 0) dur = 0;
     totalUsedHours += dur;
