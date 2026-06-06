@@ -9,11 +9,9 @@ dayjs.locale("id");
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-const formatCurrency = (amount) =>
-  Number(amount).toLocaleString("id-ID");
+const formatCurrency = (amount) => Number(amount).toLocaleString("id-ID");
 
-const formatDateTime = (date) =>
-  dayjs(date).format("DD MMMM YYYY HH:mm");
+const formatDateTime = (date) => dayjs(date).format("DD MMMM YYYY HH:mm");
 
 export async function checkAndSendReminders() {
   const now = new Date();
@@ -121,8 +119,59 @@ export async function checkAndSendReminders() {
     }
   }
 
+  // Trigger 3: EXPIRED (Lewat dueDate)
+  const expiredSchedules = await prisma.paymentSchedule.findMany({
+    where: {
+      status: { in: ["PENDING", "PARTIAL"] },
+      dueDate: { lt: now }, // Cari yang dueDate-nya lebih kecil dari waktu sekarang
+      reservation: {
+        // Hanya proses yang statusnya masih aktif/menunggu
+        status: { in: ["WAITING_DP", "CONFIRMED"] },
+      },
+    },
+    include: {
+      reservation: {
+        include: {
+          customer: { select: { whatsappNumber: true } },
+        },
+      },
+    },
+  });
+
+  for (const schedule of expiredSchedules) {
+    try {
+      // Gunakan transaction agar jika salah satu gagal, keduanya batal tersimpan
+      await prisma.$transaction([
+        prisma.reservation.update({
+          where: { id: schedule.reservationId },
+          data: { status: "EXPIRED" },
+        }),
+        prisma.paymentSchedule.update({
+          where: { id: schedule.id },
+          data: { status: "OVERDUE" }, // Menggunakan status OVERDUE sesuai ERD
+        }),
+      ]);
+
+      const msg =
+        `Mohon maaf, reservasi Anda dengan kode *${schedule.reservation.bookingCode}* ` +
+        `telah *KEDALUWARSA/DIBATALKAN* karena melewati batas waktu pembayaran (${formatDateTime(schedule.dueDate)}). ` +
+        `Silakan lakukan pemesanan ulang jika Anda masih berminat. Terima kasih.`;
+
+      // Kirim notifikasi pembatalan
+      await sendWhatsappNotification(
+        schedule.reservation.customer.whatsappNumber,
+        msg,
+      );
+    } catch (error) {
+      console.error(
+        `Gagal memproses expired untuk booking ${schedule.reservation.bookingCode}:`,
+        error,
+      );
+    }
+  }
+
   console.log(
-    `Reminder selesai: ${pendingDPs.length} DP, ${pendingSettlements.length} pelunasan diproses.`,
+    `Reminder selesai: ${pendingDPs.length} DP, ${pendingSettlements.length} pelunasan diproses. ${expiredSchedules.length} Reservasi Kedaluwarsa.`,
   );
 }
 
