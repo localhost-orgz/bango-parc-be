@@ -1,5 +1,7 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import { startCronJobs } from "./src/cronjob/cron.js";
 import authRoutes from "./src/routes/authRoutes.js";
 import areaRoutes from "./src/routes/areaRoutes.js";
 import galleryRoutes from "./src/routes/galleryRoutes.js";
@@ -10,6 +12,7 @@ import reservationTypeRoutes from "./src/routes/reservationTypeRoutes.js";
 import paymentRoutes from "./src/routes/paymentRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
 import dashboardRoutes from "./src/routes/dashboardRoutes.js";
+import cronRoutes from "./src/routes/cronRoutes.js";
 
 const app = express();
 app.use(express.json());
@@ -33,8 +36,12 @@ app.use("/api/facility", facilityRoutes);
 app.use("/api/reservation-type", reservationTypeRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/cron", cronRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
+  if (process.env.ENABLE_INTERNAL_CRON === "true") {
+    startCronJobs();
+  }
 });

@@ -304,6 +304,8 @@ model PaymentSchedule {
 
   status PaymentScheduleStatus @default(PENDING)
 
+  reminderSentAt DateTime?
+
   paymentProofs PaymentProof[]
 
   createdAt DateTime @default(now())
